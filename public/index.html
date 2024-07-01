@@ -1,25 +1,21 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <title>Student for a Day Management Software</title>
-    </head>
-    <body>
-        <h1>Student for a Day Management Software</h1>
-        <h1>LOGIN</h1>
-        <form action="" method="post">
-            <label for="email">
-                E-mail:
-            </label>
-            <input type="text" id="email" name="email" placeholder="Enter your e-mail" required>
-
-            <label for="password">
-                Password:
-            </label>
-            <input type="password" id="password" name="password" placeholder="Enter your password" required>
-
-            <button type="submit" onclick="solve()">
-                Submit
-            </button>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Page</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h2>Login</h2>
+        <form id="login-form" action="/login" method="POST">
+            <input type="email" id="email" name="email" class="input-field" placeholder="Email" required>
+            <input type="password" id="password" name="password" class="input-field" placeholder="Password" required>
+            <button id="login-button" class="button login-button" disabled>Login</button>
         </form>
-    </body>
+        <button class="button register-button">Register</button>
+    </div>
+    <script src="javascript/login_button.js"></script>
+</body>
 </html>

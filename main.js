@@ -1,107 +1,54 @@
-import sqlite3 from 'sqlite3'
-import express from 'express'
+import sqlite3 from 'sqlite3';
+import express from 'express';
+import bodyParser from 'body-parser';
+import bcrypt from 'bcrypt';
 
 // Connection to the database
+const db = new sqlite3.Database("project_database.db");
 
-const db = new sqlite3.Database("project_database.db")
+// Express app setup
+const app = express();
 
-let createStudentTable = `
-CREATE TABLE IF NOT EXISTS Student (
-    Sd_ID INTEGER PRIMARY KEY,
-    Name TEXT NOT NULL,
-    Email TEXT NOT NULL UNIQUE,
-    PhoneNumber TEXT NOT NULL,
-    FieldOfStudy TEXT NOT NULL
-);`;
+app.use(express.static("public"));
+app.use(bodyParser.json()); // Use JSON body parser
 
-let createGuideTable = `
-CREATE TABLE IF NOT EXISTS Guide (
-    Guide_ID INTEGER PRIMARY KEY,
-    Name TEXT NOT NULL,
-    Email TEXT NOT NULL UNIQUE,
-    Password TEXT NOT NULL,
-    Study TEXT NOT NULL
-);`;
+// Create tables
+const createStudentTable = `CREATE TABLE IF NOT EXISTS Student (Sd_ID INTEGER PRIMARY KEY, Name TEXT NOT NULL, Email TEXT NOT NULL UNIQUE, PhoneNumber TEXT NOT NULL, FieldOfStudy TEXT NOT NULL);`;
+const createGuideTable = `CREATE TABLE IF NOT EXISTS Guide (Guide_ID INTEGER PRIMARY KEY, Name TEXT NOT NULL, Email TEXT NOT NULL UNIQUE, Password TEXT NOT NULL, Study TEXT NOT NULL);`;
+const createCaseTable = `CREATE TABLE IF NOT EXISTS StudentCase (Case_ID INTEGER PRIMARY KEY, Sd_ID INTEGER NOT NULL, Status TEXT NOT NULL, Accepted BOOLEAN NOT NULL, Guide_ID INTEGER, FOREIGN KEY (Sd_ID) REFERENCES Student(Sd_ID), FOREIGN KEY (Guide_ID) REFERENCES Guide(Guide_ID));`;
+const createRegistrationCodesTable = `CREATE TABLE IF NOT EXISTS RegistrationCodes (Code TEXT PRIMARY KEY);`;
+const createAdminTable = `CREATE TABLE IF NOT EXISTS Admin (Admin_ID INTEGER PRIMARY KEY, Email TEXT NOT NULL UNIQUE, Password TEXT NOT NULL, Name TEXT NOT NULL);`;
 
-let createCaseTable = `
-CREATE TABLE IF NOT EXISTS StudentCase (
-    Case_ID INTEGER PRIMARY KEY,
-    Sd_ID INTEGER NOT NULL,
-    Status TEXT NOT NULL,
-    Accepted BOOLEAN NOT NULL,
-    Guide_ID INTEGER,
-    FOREIGN KEY (Sd_ID) REFERENCES Student(Sd_ID),
-    FOREIGN KEY (Guide_ID) REFERENCES Guide(Guide_ID)
-);`;
-
-let createRegistrationCodesTable = `
-CREATE TABLE IF NOT EXISTS RegistrationCodes (
-    Code TEXT PRIMARY KEY
-);`;
-
-let createAdminTable = `
-CREATE TABLE IF NOT EXISTS Admin (
-    Admin_ID INTEGER PRIMARY KEY,
-    Email TEXT NOT NULL UNIQUE,
-    Password TEXT NOT NULL,
-    Name TEXT NOT NULL
-);`;
-
-db.serialize( (/*arguments*/) => {
-
-// Example of executing the table creation (assuming you have an SQLite connection named `db`)
+db.serialize(() => {
     db.run(createStudentTable);
     db.run(createGuideTable);
     db.run(createCaseTable);
     db.run(createRegistrationCodesTable);
     db.run(createAdminTable);
+});
 
+// Login route
+app.post('/login', (req, res) => {
+    const { email, password } = req.body;
 
-    // db.run(`INSERT INTO Student (Name, Email, PhoneNumber, FieldOfStudy) VALUES 
-    //     ('Alice Johnson', 'alice@example.com', '1234567890', 'Computer Science'),
-    //     ('Bob Smith', 'bob@example.com', '0987654321', 'Mechanical Engineering'),
-    //     ('Carol White', 'carol@example.com', '1122334455', 'Electrical Engineering');`);
+    db.get("SELECT Password FROM Guide WHERE Email = ?", [email], (err, row) => {
+        if (err) {
+            res.status(500).send("Internal server error");
+        } else if (!row) {
+            res.status(401).send("Invalid email or password");
+        } else {
+            const hashedPassword = row.Password;
+            bcrypt.compare(password, hashedPassword, (err, result) => {
+                if (result) {
+                    res.send("Login successful");
+                } else {
+                    res.status(401).send("Invalid email or password");
+                }
+            });
+        }
+    });
+});
 
-    // // Insert sample data into Guide table
-    // db.run(`INSERT INTO Guide (Name, Email, Password, Study) VALUES 
-    //     ('Dr. Emily Brown', 'emily@example.com', 'password123', 'Computer Science'),
-    //     ('Dr. John Green', 'john@example.com', 'password456', 'Mechanical Engineering');`);
-
-    // // Insert sample data into StudentCase table
-    // db.run(`INSERT INTO StudentCase (Sd_ID, Status, Accepted, Guide_ID) VALUES 
-    //     (1, 'Pending', 0, 1),
-    //     (2, 'Accepted', 1, 2),
-    //     (3, 'Rejected', 0, 1);`);
-        
-})
-
-// db.all("SELECT * FROM Student", [/* Arguments if ? */], (err, rows) => { if (!err && rows) { console.log(row.Name) } })
-//                                                      // (err, row) -> arguments that it outputs: err = error and row = rows that it received
-
-
-function getAllNames() {
-    return new Promise((resolve, reject) => {
-       db.all("SELECT Name, Sd_ID FROM Student", [], (err, rows) => {
-          resolve(rows);
-       })
-    })
-}
-
-getAllNames().then( (res) => { console.log(res) } )
-
-db.close()
-
-//tell the app to use that folder as the 'static page'
-var app = express()
-
-app.use(express.static("public"))
-
-app.listen(4000, console.log("Hello world"))
-
-
-//changes
-
-//test2
-
-
-
+app.listen(4000, () => {
+    console.log("Server running on port 4000");
+});
