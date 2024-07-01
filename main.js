@@ -1,4 +1,5 @@
 import sqlite3 from 'sqlite3'
+import express from 'express'
 
 // Connection to the database
 
@@ -89,6 +90,14 @@ function getAllNames() {
 getAllNames().then( (res) => { console.log(res) } )
 
 db.close()
+
+//tell the app to use that folder as the 'static page'
+var app = express()
+
+app.use(express.static("public"))
+
+app.listen(4000, console.log("Hello world"))
+
 
 //changes
 
