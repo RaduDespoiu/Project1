@@ -2,7 +2,7 @@ import sqlite3 from 'sqlite3'
 
 // Connection to the database
 
-const db = new sqlite3.Database("test.db")
+const db = new sqlite3.Database("project_database.db")
 
 let createStudentTable = `
 CREATE TABLE IF NOT EXISTS Student (
